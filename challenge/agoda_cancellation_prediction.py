@@ -1,3 +1,5 @@
+from sklearn.base import BaseEstimator # maybe from utils
+
 from challenge.agoda_cancellation_estimator import AgodaCancellationEstimator
 from IMLearn.utils import split_train_test
 
@@ -28,6 +30,7 @@ def load_data(filename: str):
                           "hotel_star_rating",
                           "customer_nationality"]]
     labels = full_data["cancellation_datetime"]
+    # not_canceld = full_data.where(if )
 
     return features, labels
 
