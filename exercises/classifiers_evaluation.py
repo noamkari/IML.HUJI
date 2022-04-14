@@ -4,6 +4,9 @@ from typing import Tuple
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
+
+from IMLearn.utils import split_train_test
+
 pio.templates.default = "simple_white"
 
 
@@ -26,26 +29,45 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
         Class vector specifying for each sample its class
 
     """
-    raise NotImplementedError()
+    full_data = np.load(filename)
+    return np.split(full_data, [-1], axis=1)
+
+    # raise NotImplementedError()
 
 
 def run_perceptron():
     """
-    Fit and plot fit progression of the Perceptron algorithm over both the linearly separable and inseparable datasets
+    Fit and plot fit progression of the Perceptron algorithm over both the
+     linearly separable and inseparable datasets
 
-    Create a line plot that shows the perceptron algorithm's training loss values (y-axis)
-    as a function of the training iterations (x-axis).
+    Create a line plot that shows the perceptron algorithm's training loss
+    values (y-axis) as a function of the training iterations (x-axis).
     """
-    for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
+    for n, f in [("Linearly Separable", "linearly_separable.npy"),
+                 ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset("../datasets/" + f)
 
         # Fit Perceptron and record loss in each fit iteration
+
         losses = []
-        raise NotImplementedError()
+        perceptron = Perceptron(
+            callback=lambda p, X, y: losses.append(p._loss(X, y)))
+        perceptron.fit(X, y)
 
         # Plot figure
-        raise NotImplementedError()
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=np.arange(perceptron.max_iter_), y=losses,
+                                 mode="lines"))
+        fig.update_layout(title=n,
+                          xaxis_title="Sample value",
+                          yaxis_title="loss percent")
+
+        # fig.show()
+
+        # TODO remove
+        fig.write_image(f"losses in {n}.png")
 
 
 def compare_gaussian_classifiers():
@@ -54,7 +76,7 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(f)
 
         # Fit models and predict over training set
         raise NotImplementedError()

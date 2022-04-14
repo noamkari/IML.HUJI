@@ -25,6 +25,7 @@ class LDA(BaseEstimator):
     self.pi_: np.ndarray of shape (n_classes)
         The estimated class probabilities. To be set in `GaussianNaiveBayes.fit`
     """
+
     def __init__(self):
         """
         Instantiate an LDA classifier
@@ -46,7 +47,9 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.mu_ = np.mean(X)
+        self.cov_ = np.cov(X)
+        self._cov_inv = np.linalg.inv(self._cov_inv)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,7 +83,8 @@ class LDA(BaseEstimator):
 
         """
         if not self.fitted_:
-            raise ValueError("Estimator must first be fitted before calling `likelihood` function")
+            raise ValueError(
+                "Estimator must first be fitted before calling `likelihood` function")
 
         raise NotImplementedError()
 

@@ -2,10 +2,12 @@ from typing import NoReturn
 from ...base import BaseEstimator
 import numpy as np
 
+
 class GaussianNaiveBayes(BaseEstimator):
     """
     Gaussian Naive-Bayes classifier
     """
+
     def __init__(self):
         """
         Instantiate a Gaussian Naive Bayes classifier
@@ -73,7 +75,8 @@ class GaussianNaiveBayes(BaseEstimator):
 
         """
         if not self.fitted_:
-            raise ValueError("Estimator must first be fitted before calling `likelihood` function")
+            raise ValueError(
+                "Estimator must first be fitted before calling `likelihood` function")
 
         raise NotImplementedError()
 
