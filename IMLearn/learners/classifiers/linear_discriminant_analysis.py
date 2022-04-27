@@ -1,4 +1,6 @@
 from typing import NoReturn
+
+from .. import MultivariateGaussian
 from ...base import BaseEstimator
 import numpy as np
 from numpy.linalg import det, inv
@@ -47,9 +49,20 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        self.mu_ = np.mean(X)
-        self.cov_ = np.cov(X)
-        self._cov_inv = np.linalg.inv(self._cov_inv)
+
+        self.classes_ = np.unique(y)
+
+        self.pi_ = np.array((y == i).mean() for i in self.classes_)
+        self.mu_ = np.array([(X[y == i]).mean(axis=0) for i in self.classes_])
+
+
+        for i in self.classes_:
+            self.cov_ += (X[y == i] - self.mu_[:, 0]) @ (
+                    X[y == i] - self.mu_[:, 0].T) + (
+                                 X[y == i] - self.mu_[:, 1]) @ (
+                                 X[y == i] - self.mu_[:, 1].T) / y.size
+
+        self._cov_inv = np.linalg.inv(self.cov_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -65,7 +78,7 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return np.argmax(self.likelihood(X), axis=1)
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -86,9 +99,18 @@ class LDA(BaseEstimator):
             raise ValueError(
                 "Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        output = np.ndarray(X.shape[0], self.classes_.size)
+
+        for i in range(X.shape[0]):
+            for j in range(self.classes_.size):
+                output[i][j] = MultivariateGaussian.log_likelihood(self.mu_[j],
+                                                                   self.cov_,
+                                                                   X[:, i])
+
+        return output
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+
         """
         Evaluate performance under misclassification loss function
 
