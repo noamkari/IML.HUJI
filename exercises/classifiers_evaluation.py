@@ -140,11 +140,10 @@ def compare_gaussian_classifiers():
             fig.add_trace(get_ellipse(
                 model_dct["gaussian_naive"].mu_[i],
                 np.diag(model_dct["gaussian_naive"].vars_[i])), row=1, col=2)
-
         fig.show()
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # run_perceptron()
+    run_perceptron()
     compare_gaussian_classifiers()
