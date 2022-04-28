@@ -68,7 +68,7 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     accurate_sum = 0
     for i in range(y_true.size):
-        if y_true == y_pred:
+        if y_true[i] == y_pred[i]:
             accurate_sum += 1
 
     return accurate_sum / y_true.size

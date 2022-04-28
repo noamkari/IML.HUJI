@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy as np
+import math
 from numpy.linalg import inv, det, slogdet
 
 
@@ -52,16 +53,12 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        self.mu_ = sum(X) / X.size
-
-        temp_sum = 0
-        for sample in X:
-            temp_sum += (sample - self.mu_) ** 2
-
-        self.var_ = (temp_sum / (
-            X.size if self.biased_ else X.size - 1)) ** 0.5
-
         self.fitted_ = True
+        self.mu_ = np.mean(X)
+        if self.biased_:
+            self.var_ = np.var(X, ddof=0)
+        else:
+            self.var_ = np.var(X, ddof=1)
         return self
 
     def pdf(self, X: np.ndarray) -> np.ndarray:
@@ -83,15 +80,16 @@ class UnivariateGaussian:
         ValueError: In case function was called prior fitting the model
         """
         if not self.fitted_:
-            raise ValueError(
-                "Estimator must first be fitted before calling `pdf` function")
+            raise ValueError("Estimator must first be fitted before calling `pdf` function")
+        ret = np.ndarray(X.shape[0])
+        for i in range(X.shape[0]):
+            ret[i] = self.norm_pdf(X[i])
+        return ret
 
-        pdfs = np.ndarray(X.size)
-        for i in range(X.size):
-            pdfs[i] = np.exp(-0.5 * ((X[i] - self.mu_) ** 2 / self.var_)) / \
-                      np.sqrt(2 * np.pi * self.var_)
-
-        return pdfs
+    def norm_pdf(self, x):
+        denom = (2 * math.pi * self.var_) ** .5
+        num = math.exp(-(float(x) - float(self.mu_)) ** 2 / (2 * self.var_))
+        return num / denom
 
     @staticmethod
     def log_likelihood(mu: float, sigma: float, X: np.ndarray) -> float:
@@ -112,12 +110,14 @@ class UnivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        tmp_sum = 0
-        for i in range(X.size):
-            tmp_sum += (X[i] - mu) ** 2
-
-        return (-X.size / 2) * (np.log(2 * np.pi) + np.log(sigma ** 2)) - \
-               tmp_sum * 1 / (2 * sigma ** 2)
+        model = UnivariateGaussian()
+        model.fit(X)
+        model.mu_ = mu
+        model.var_ = sigma
+        ret = 0
+        for i in model.pdf(X):
+            ret = ret + math.log(i)
+        return ret
 
 
 class MultivariateGaussian:
@@ -164,13 +164,10 @@ class MultivariateGaussian:
         Sets `self.mu_`, `self.cov_` attributes according to calculated estimation.
         Then sets `self.fitted_` attribute to `True`
         """
-        rows, cols = X.shape
-
-        self.mu_ = (X.sum(axis=0)) / rows
-        tmp_X = np.array([X[i] - self.mu_ for i in range(rows)])
-        self.cov_ = np.dot(tmp_X.transpose(), tmp_X) / (rows - 1)
 
         self.fitted_ = True
+        self.mu_ = X.mean(axis=0)
+        self.cov_ = np.cov(X, rowvar=False)
         return self
 
     def pdf(self, X: np.ndarray):
@@ -192,19 +189,22 @@ class MultivariateGaussian:
         ValueError: In case function was called prior fitting the model
         """
         if not self.fitted_:
-            raise ValueError(
-                "Estimator must first be fitted before calling `pdf` function")
-
+            raise ValueError("Estimator must first be fitted before calling `pdf` function")
+        covDet = np.linalg.det(self.cov_)
+        covI = np.linalg.inv(self.cov_)
         rows, cols = X.shape
-
-        tmp_X = np.array([X[i] - self.mu_ for i in range(rows)])
-        return np.exp(-0.5 * np.linalg.multi_dot(X - self.mu_).transpose(),
-                      np.linalg.inv(self.cov_), tmp_X) / np.sqrt(
-            2 * np.pi * np.linalg.det(self.cov_))
+        ret = np.ndarray(rows)
+        denom = math.pow((2 * math.pi), float(cols) / 2) * math.pow(covDet, 1.0 / 2)
+        for i in range(rows):
+            xMmu = X[i] - self.mu_
+            matsum = np.matmul(xMmu, covI)
+            matsum = np.matmul(matsum, xMmu.T)
+            upper = math.exp(-0.5 * (matsum))
+            ret[i] = upper / denom
+        return ret
 
     @staticmethod
-    def log_likelihood(mu: np.ndarray, cov: np.ndarray,
-                       X: np.ndarray) -> float:
+    def log_likelihood(mu: np.ndarray, cov: np.ndarray, X: np.ndarray) -> float:
         """
         Calculate the log-likelihood of the data under a specified Gaussian model
 
@@ -222,13 +222,11 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
-        rows, cols = X.shape
-        tmp_X = np.array([X[i] - mu for i in range(rows)])
-
-        tmp_sum = 0
-        for i in range(rows):
-            tmp_sum += np.linalg.multi_dot(
-                [tmp_X[i].transpose(), np.linalg.inv(cov), tmp_X[i]])
-
-        return -(X.size / 2) * (cols * np.log(2 * np.pi) + np.log(
-            np.linalg.det(cov))) - 0.5 * tmp_sum
+        model = MultivariateGaussian()
+        model.fit(X)
+        model.mu_ = mu
+        model.cov_ = cov
+        ret = 0
+        for a in model.pdf(X):
+            ret = ret + math.log(a)
+        return ret
