@@ -17,13 +17,14 @@ def mean_square_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     MSE of given predictions
     """
     los_sum = 0
-    for true_val, pred_val in y_true, y_pred:
-        los_sum += ((true_val - pred_val) ** 2)
+    for i in range(len(y_true)):
+        los_sum += ((y_true[i] - y_pred[i]) ** 2)
 
-    return los_sum
+    return los_sum / len(y_true)
 
 
-def misclassification_error(y_true: np.ndarray, y_pred: np.ndarray, normalize: bool = True) -> float:
+def misclassification_error(y_true: np.ndarray, y_pred: np.ndarray,
+                            normalize: bool = True) -> float:
     """
     Calculate misclassification loss
 
@@ -40,7 +41,14 @@ def misclassification_error(y_true: np.ndarray, y_pred: np.ndarray, normalize: b
     -------
     Misclassification of given predictions
     """
-    raise NotImplementedError()
+    size = y_pred.size
+    error_sum = 0
+
+    for i in range(size):
+        if y_pred[i] != y_true[i]:
+            error_sum += 1
+
+    return error_sum / size if normalize else error_sum
 
 
 def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -58,7 +66,12 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     -------
     Accuracy of given predictions
     """
-    raise NotImplementedError()
+    accurate_sum = 0
+    for i in range(y_true.size):
+        if y_true[i] == y_pred[i]:
+            accurate_sum += 1
+
+    return accurate_sum / y_true.size
 
 
 def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -77,3 +90,12 @@ def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     Cross entropy of given predictions
     """
     raise NotImplementedError()
+
+
+if __name__ == '__main__':
+    y_true = np.array([279000, 432000, 326000, 333000, 437400, 555950])
+    y_pred = np.array(
+        [199000.37562541, 452589.25533196, 345267.48129011, 345856.57131275,
+         563867.1347574, 395102.94362135])
+
+    print(mean_square_error(y_true, y_pred))

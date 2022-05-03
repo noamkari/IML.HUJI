@@ -1,8 +1,14 @@
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
+import numpy as np
 from typing import Tuple
 from utils import *
 import plotly.graph_objects as go
+import plotly.io as pio
 from plotly.subplots import make_subplots
+from math import atan2, pi
+from IMLearn.metrics import accuracy
+
+pio.templates.default = "simple_white"
 from math import atan2, pi
 
 
@@ -25,27 +31,42 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
         Class vector specifying for each sample its class
 
     """
-    data = np.load(filename)
-    return data[:, :2], data[:, 2].astype(int)
+    full_data = np.load(filename)
+    return np.split(full_data, [-1], axis=1)
+
+    # raise NotImplementedError()
 
 
 def run_perceptron():
     """
-    Fit and plot fit progression of the Perceptron algorithm over both the linearly separable and inseparable datasets
+    Fit and plot fit progression of the Perceptron algorithm over both the
+     linearly separable and inseparable datasets
 
-    Create a line plot that shows the perceptron algorithm's training loss values (y-axis)
-    as a function of the training iterations (x-axis).
+    Create a line plot that shows the perceptron algorithm's training loss
+    values (y-axis) as a function of the training iterations (x-axis).
     """
-    for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
+    for n, f in [("Linearly Separable", "linearly_separable.npy"),
+                 ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset("../datasets/" + f)
 
         # Fit Perceptron and record loss in each fit iteration
-        losses = []
-        raise NotImplementedError()
 
-        # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        losses = []
+        perceptron = Perceptron(
+            callback=lambda p, X, y: losses.append(p._loss(X, y)))
+        perceptron.fit(X, y)
+
+        # Plot figure
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=np.arange(perceptron.max_iter_), y=losses,
+                                 mode="lines"))
+        fig.update_layout(title=n,
+                          xaxis_title="Sample value",
+                          yaxis_title="loss percent")
+
+        fig.show()
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
@@ -77,27 +98,53 @@ def compare_gaussian_classifiers():
     """
     Fit both Gaussian Naive Bayes and LDA classifiers on both gaussians1 and gaussians2 datasets
     """
+
+    model_dct = {"lda": LDA(), "gaussian_naive": GaussianNaiveBayes()}
+
     for f in ["gaussian1.npy", "gaussian2.npy"]:
+
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(f"../datasets/{f}")
 
         # Fit models and predict over training set
-        raise NotImplementedError()
 
-        # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
-        # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
-        # Create subplots
-        from IMLearn.metrics import accuracy
-        raise NotImplementedError()
+        pred_dct = {}
+        symbol_dct = {label: color for
+                      color, label in enumerate(np.unique(y))}
 
-        # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        for name, model in model_dct.items():
+            model.fit(X, y)
+            pred_dct[name] = (model.predict(X))
 
-        # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
+        y = y.reshape(y.shape[0])
+        fig = make_subplots(rows=1, cols=2, subplot_titles=[
+            f"{name} accuracy is {accuracy(y, pred)}"
+            for name, pred in pred_dct.items()])
 
-        # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+        for i, model in enumerate(model_dct.keys()):
+            fig.add_trace(go.Scatter(x=X.T[0], y=X.T[1],
+                                     mode="markers",
+                                     marker=dict(
+                                         symbol=[symbol_dct[l] for l in y],
+                                         color=pred_dct[model])),
+                          row=1, col=i + 1)
+
+            fig.add_trace(go.Scatter(x=model_dct[model].mu_[:, 0],
+                                     y=model_dct[model].mu_[:, 1],
+                                     mode='markers',
+                                     marker=dict(color="black", symbol="x")),
+                          row=1, col=i + 1)
+
+        for i in range(model_dct["lda"].classes_.size):
+            fig.add_trace(get_ellipse(
+                model_dct["lda"].mu_[i],
+                model_dct["lda"].cov_), row=1, col=1)
+
+        for i in range(model_dct["gaussian_naive"].classes_.size):
+            fig.add_trace(get_ellipse(
+                model_dct["gaussian_naive"].mu_[i],
+                np.diag(model_dct["gaussian_naive"].vars_[i])), row=1, col=2)
+        fig.show()
 
 
 if __name__ == '__main__':

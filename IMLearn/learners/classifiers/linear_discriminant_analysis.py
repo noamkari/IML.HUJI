@@ -1,6 +1,10 @@
 from typing import NoReturn
+
+from .. import MultivariateGaussian
 from ...base import BaseEstimator
 import numpy as np
+from ...metrics import misclassification_error
+
 from numpy.linalg import det, inv
 
 
@@ -25,6 +29,7 @@ class LDA(BaseEstimator):
     self.pi_: np.ndarray of shape (n_classes)
         The estimated class probabilities. To be set in `GaussianNaiveBayes.fit`
     """
+
     def __init__(self):
         """
         Instantiate an LDA classifier
@@ -46,7 +51,31 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+
+        self.fitted_ = True
+        y = y.reshape(y.shape[0])
+        self.classes_ = np.unique(y)
+        self.pi_ = np.zeros(self.classes_.shape[0])
+
+        for c in self.classes_:
+            a_sum = 0
+            for l in y:
+                if l == c:
+                    a_sum += 1
+            np.put(self.pi_, c, float(a_sum) / y.size)
+
+        self.mu_ = np.array(
+            [np.mean(X[y == i], axis=0) for i in self.classes_])
+        v = np.zeros(shape=[X.shape[1], X.shape[1]])
+
+        for i in range(self.classes_.size):
+            for x in X[y == self.classes_[i]]:
+                curr = x - self.mu_[i]
+                curr = np.asmatrix(curr)
+                v = v + curr.T @ curr
+
+        self.cov_ = v * (1 / (X.shape[0] - self.classes_.size))
+        self._cov_inv = inv(self.cov_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -62,7 +91,14 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+
+        max_ = np.ndarray.argmax(self.likelihood(X) * self.pi_, axis=1)
+        arg_max = np.ndarray(X.shape[0])
+
+        for arg_i in range(arg_max.size):
+            arg_max[arg_i] = self.classes_[max_[arg_i]]
+
+        return arg_max
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,11 +116,25 @@ class LDA(BaseEstimator):
 
         """
         if not self.fitted_:
-            raise ValueError("Estimator must first be fitted before calling `likelihood` function")
+            raise ValueError(
+                "Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        like = None
+        for i in range(self.classes_.size):
+            m_gaussian = MultivariateGaussian()
+            m_gaussian.fitted_ = True
+            m_gaussian.mu_, m_gaussian.cov_ = self.mu_[i], self.cov_
+            temp_ptf = m_gaussian.pdf(X)
+
+            if like is None:
+                like = temp_ptf
+            else:
+                like = np.c_[like, temp_ptf]
+
+        return like
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+
         """
         Evaluate performance under misclassification loss function
 
@@ -101,5 +151,5 @@ class LDA(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        from ...metrics import misclassification_error
-        raise NotImplementedError()
+
+        return misclassification_error(y, self.predict(X))
