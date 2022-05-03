@@ -112,74 +112,74 @@ if __name__ == '__main__':
     np.random.seed(0)
 
 
-    # # Question 1 - Load and preprocessing of housing prices dataset
-    # X, prices = load_data("../datasets/house_prices.csv")
-    #
-    # # Question 2 - Feature evaluation with respect to response
-    # feature_evaluation(X, prices, "")
-    #
-    # # Question 3 - Split samples into training- and testing sets.
-    # X_train, y_train, X_test, y_test = split_train_test(X, prices)
-    #
-    # # Question 4 - Fit model over increasing percentages of the overall training data
-    # # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
-    # #   1) Sample p% of the overall training data
-    # #   2) Fit linear model (including intercept) over sampled set
-    # #   3) Test fitted model over test set
-    # #   4) Store average and variance of loss over test set
-    # # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
-    #
-    # liner_reg = LinearRegression()
-    #
-    # avg_loss = np.ndarray(91, )
-    # std = np.ndarray(91, )
-    #
-    # for percent in range(10, 101):
-    #     tmp_loss = np.ndarray(10, )
-    #     for i in range(10):
-    #         liner_reg.fit(X_train.sample(random_state=i,
-    #                                      frac=(percent / 100)).to_numpy(),
-    #                       y_train.sample(random_state=i,
-    #                                      frac=(percent / 100)).to_numpy())
-    #
-    #         tmp_loss[i] = liner_reg.loss(X_test.to_numpy(), y_test.to_numpy())
-    #
-    #     avg_loss[percent - 10] = np.mean(tmp_loss)
-    #     std[percent - 10] = np.std(tmp_loss)
-    #
-    # fig = go.Figure([
-    #     go.Scatter(
-    #         name='Mean value',
-    #         x=np.arange(10, 101),
-    #         y=avg_loss,
-    #         mode='markers+lines',
-    #         line=dict(color='rgb(31, 119, 180)'),
-    #     ),
-    #     go.Scatter(
-    #         name='Upper Bound',
-    #         x=np.arange(10, 101),
-    #         y=avg_loss + 2 * std,
-    #         mode='lines',
-    #         marker=dict(color="#444"),
-    #         line=dict(width=0),
-    #         showlegend=False
-    #     ),
-    #     go.Scatter(
-    #         name='Lower Bound',
-    #         x=np.arange(10, 101),
-    #         y=avg_loss - 2 * std,
-    #         marker=dict(color="#444"),
-    #         line=dict(width=0),
-    #         mode='lines',
-    #         fillcolor='rgba(68, 68, 68, 0.3)',
-    #         fill='tonexty',
-    #         showlegend=False
-    #     )
-    # ])
-    #
-    # fig.update_layout(
-    #     yaxis_title='mean values',
-    #     title='Mean loss vs sample percent',
-    #     hovermode="x"
-    # )
-    # fig.show()
+    # Question 1 - Load and preprocessing of housing prices dataset
+    X, prices = load_data("../datasets/house_prices.csv")
+
+    # Question 2 - Feature evaluation with respect to response
+    feature_evaluation(X, prices, "")
+
+    # Question 3 - Split samples into training- and testing sets.
+    X_train, y_train, X_test, y_test = split_train_test(X, prices)
+
+    # Question 4 - Fit model over increasing percentages of the overall training data
+    # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
+    #   1) Sample p% of the overall training data
+    #   2) Fit linear model (including intercept) over sampled set
+    #   3) Test fitted model over test set
+    #   4) Store average and variance of loss over test set
+    # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+
+    liner_reg = LinearRegression()
+
+    avg_loss = np.ndarray(91, )
+    std = np.ndarray(91, )
+
+    for percent in range(10, 101):
+        tmp_loss = np.ndarray(10, )
+        for i in range(10):
+            liner_reg.fit(X_train.sample(random_state=i,
+                                         frac=(percent / 100)).to_numpy(),
+                          y_train.sample(random_state=i,
+                                         frac=(percent / 100)).to_numpy())
+
+            tmp_loss[i] = liner_reg.loss(X_test.to_numpy(), y_test.to_numpy())
+
+        avg_loss[percent - 10] = np.mean(tmp_loss)
+        std[percent - 10] = np.std(tmp_loss)
+
+    fig = go.Figure([
+        go.Scatter(
+            name='Mean value',
+            x=np.arange(10, 101),
+            y=avg_loss,
+            mode='markers+lines',
+            line=dict(color='rgb(31, 119, 180)'),
+        ),
+        go.Scatter(
+            name='Upper Bound',
+            x=np.arange(10, 101),
+            y=avg_loss + 2 * std,
+            mode='lines',
+            marker=dict(color="#444"),
+            line=dict(width=0),
+            showlegend=False
+        ),
+        go.Scatter(
+            name='Lower Bound',
+            x=np.arange(10, 101),
+            y=avg_loss - 2 * std,
+            marker=dict(color="#444"),
+            line=dict(width=0),
+            mode='lines',
+            fillcolor='rgba(68, 68, 68, 0.3)',
+            fill='tonexty',
+            showlegend=False
+        )
+    ])
+
+    fig.update_layout(
+        yaxis_title='mean values',
+        title='Mean loss vs sample percent',
+        hovermode="x"
+    )
+    fig.show()
