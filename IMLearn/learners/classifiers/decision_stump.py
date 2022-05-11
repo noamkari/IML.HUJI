@@ -42,18 +42,16 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        # fixme sign is magig number
+        min_err = np.inf
 
-        min_err, self.threshold_ = self._find_threshold(X[:, [0]], y, 1)
-        self.j_ = 0
-        self.sign_ = 1
-
-        for i in range(1, X.shape[1]):
-            out = self._find_threshold(X[:, [i]], y, 1)
-            if min_err > out[0]:
-                min_err = out[0]
-                self.threshold_ = out[1]
-                self.j_ = i
+        for i in range(X.shape[1]):
+            for sign in [1, -1]:
+                out = self._find_threshold(X[:, i], y, sign)
+                if min_err > out[0]:
+                    min_err = out[0]
+                    self.threshold_ = out[1]
+                    self.j_ = i
+                    self.sign_ = sign
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -77,7 +75,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        return np.where(X[:, self.j_] >= self.threshold_, -self.sign_,
+        return np.where(self.threshold_ > X[:, self.j_], -self.sign_,
                         self.sign_)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
@@ -113,8 +111,10 @@ class DecisionStump(BaseEstimator):
         """
         err = {}
         for val in np.unique(values):
-            tmp_labels = np.where(values >= val, -sign, sign)
-            err[misclassification_error(tmp_labels, labels, False)] = val
+            # fixme sign or - sign
+            tmp_labels_1 = np.where(values >= val, sign, -sign)
+            err[np.sum(np.where(np.sign(tmp_labels_1) != np.sign(labels),
+                                abs(labels), 0))] = val
 
         min_err = min(err.keys())
         return min_err, err[min_err]
@@ -136,5 +136,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        #fixme error
         return misclassification_error(y, self.predict(X))

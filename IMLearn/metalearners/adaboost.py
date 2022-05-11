@@ -52,23 +52,20 @@ class AdaBoost(BaseEstimator):
         """
         self.D_ = np.full(shape=y.shape, fill_value=1 / y.shape[0])
         self.models_ = []
-        self.weights_ = np.empty(self.iterations_)
+        self.weights_ = np.zeros(self.iterations_)
+
         for t in range(self.iterations_):
+            # todo remove
+            print(t)
+
             self.models_.append(self.wl_().fit(X, y * self.D_))
 
-            err = 0
             pred = self.models_[t].predict(X)
-            for i in range(y.shape[0]):
-                if np.sign(pred[i]) != np.sign(y[i]):
-                    err += self.D_[i]
-
+            err = np.sum(np.where(np.sign(pred) != np.sign(y), self.D_, 0))
             self.weights_[t] = 0.5 * np.log((1 / err) - 1)
 
-            for i in range(y.shape[0]):
-                self.D_[i] = self.D_[i] * np.exp(
-                    -y[i] * self.weights_[t] * pred[i])
-
-            self.D_ = self.D_ / np.sum(self.D_)
+            self.D_ *= (np.exp(-self.weights_[t] * y * pred))
+            self.D_ /= np.sum(self.D_)
 
     def _predict(self, X):
         """
@@ -84,7 +81,7 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        return self.partial_predict(X, X.shape[1])
+        return self.partial_predict(X, len(self.models_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -122,7 +119,7 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        s = 0
+        s = np.zeros(X.shape[0])
         for i in range(T):
             s += self.weights_[i] * self.models_[i].predict(X)
 
@@ -148,4 +145,4 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return misclassification_error(y, self.partial_predict(X, T))
+        return np.sum(np.where(y != self.partial_predict(X, T), 1, 0)) / y.size
