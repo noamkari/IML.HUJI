@@ -41,24 +41,42 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     X_test = X_test.to_numpy()
     y_test = y_test.to_numpy()
 
-
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=X, y=y, mode="markers", name="true"))
     fig.add_trace(
-        go.Scatter(x=X_train.to_numpy().flatten(), y=y_train, mode="markers",
+        go.Scatter(x=X_train.flatten(), y=y_train, mode="markers",
                    name="train"))
     fig.add_trace(
-        go.Scatter(x=X_test.to_numpy().flatten(), y=y_test, mode="markers",
+        go.Scatter(x=X_test.flatten(), y=y_test, mode="markers",
                    name="test"))
     fig.show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
-    for degree in range(11):
-        cross_validate(PolynomialFitting(degree), X_train, y_train,
-                       mean_square_error)
+    MAX_DEGREE = 10
+
+    train_lost = []
+    test_lost = []
+
+    for degree in range(MAX_DEGREE + 1):
+        cur_lost, cur_valid = cross_validate(PolynomialFitting(degree),
+                                             X_train, y_train,
+                                             mean_square_error)
+        train_lost.append(cur_lost)
+        test_lost.append(cur_valid)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(x=np.arange(MAX_DEGREE + 1), y=train_lost, name="train lost"))
+    fig.add_trace(
+        go.Bar(x=np.arange(MAX_DEGREE + 1), y=test_lost, name="test lost"))
+    fig.show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
-    raise NotImplementedError()
+    chosen_degree = 5
+
+    pol_fitting = PolynomialFitting(chosen_degree)
+    pol_fitting.fit(X_train, y_train)
+    pol_fitting.loss(X_test, y_test)
 
 
 def select_regularization_parameter(n_samples: int = 50,
@@ -88,3 +106,5 @@ def select_regularization_parameter(n_samples: int = 50,
 if __name__ == '__main__':
     np.random.seed(0)
     select_polynomial_degree()
+    select_polynomial_degree(noise=0)
+    select_polynomial_degree(1500, 10)
