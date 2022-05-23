@@ -5,7 +5,8 @@ from sklearn import datasets
 from IMLearn.metrics import mean_square_error
 from IMLearn.utils import split_train_test
 from IMLearn.model_selection import cross_validate
-from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, RidgeRegression
+from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, \
+    RidgeRegression
 from sklearn.linear_model import Lasso
 
 from utils import *
@@ -27,16 +28,41 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     """
     # Question 1 - Generate dataset for model f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) + eps for eps Gaussian noise
     # and split into training- and testing portions
-    raise NotImplementedError()
+
+    X = np.linspace(-1.2, 2, n_samples)
+
+    noise = [np.random.normal(0, noise) for _ in range(n_samples)]
+    y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
+    X_train, y_train, X_test, y_test = split_train_test(pd.DataFrame(X),
+                                                        pd.Series(y + noise),
+                                                        2 / 3)
+    X_train = X_train.to_numpy()
+    y_train = y_train.to_numpy()
+    X_test = X_test.to_numpy()
+    y_test = y_test.to_numpy()
+
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=X, y=y, mode="markers", name="true"))
+    fig.add_trace(
+        go.Scatter(x=X_train.to_numpy().flatten(), y=y_train, mode="markers",
+                   name="train"))
+    fig.add_trace(
+        go.Scatter(x=X_test.to_numpy().flatten(), y=y_test, mode="markers",
+                   name="test"))
+    fig.show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
-    raise NotImplementedError()
+    for degree in range(11):
+        cross_validate(PolynomialFitting(degree), X_train, y_train,
+                       mean_square_error)
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
     raise NotImplementedError()
 
 
-def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 500):
+def select_regularization_parameter(n_samples: int = 50,
+                                    n_evaluations: int = 500):
     """
     Using sklearn's diabetes dataset use cross-validation to select the best fitting regularization parameter
     values for Ridge and Lasso regressions
@@ -61,4 +87,4 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 if __name__ == '__main__':
     np.random.seed(0)
-    raise NotImplementedError()
+    select_polynomial_degree()
