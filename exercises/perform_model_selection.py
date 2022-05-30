@@ -1,6 +1,7 @@
 from __future__ import annotations
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn import datasets
 from IMLearn.metrics import mean_square_error
 from IMLearn.utils import split_train_test
@@ -95,17 +96,73 @@ def select_regularization_parameter(n_samples: int = 50,
         Number of regularization parameter values to evaluate for each of the algorithms
     """
     # Question 6 - Load diabetes dataset and split into training and testing portions
-    raise NotImplementedError()
+    X, y = datasets.load_diabetes(return_X_y=True, as_frame=True)
+    X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(
+        X, y, train_size=n_samples)
+
+    X_train = X_train.to_numpy()
+    y_train = y_train.to_numpy()
+    X_test = X_test.to_numpy()
+    y_test = y_test.to_numpy()
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
-    raise NotImplementedError()
+
+    model_dct = {"RidgeRegression": RidgeRegression,
+                 "Lasso": Lasso}
+    ranges = [(0, 3), (0, 100), (0, 0.25)]
+
+    for cur_range in ranges:
+
+        fig = go.Figure()
+        for model_name, model in model_dct.items():
+
+            train_lost = []
+            test_lost = []
+
+            for lam in np.linspace(cur_range[0], cur_range[1],
+                                   num=n_evaluations):
+                cur_lost, cur_valid = cross_validate(
+                    model(lam),
+                    X_train, y_train,
+                    mean_square_error)
+
+                train_lost.append(cur_lost)
+                test_lost.append(cur_valid)
+
+            fig.add_trace(go.Scatter(
+                x=np.linspace(cur_range[0], cur_range[1], num=n_evaluations),
+                y=train_lost,
+                name=f"train lost {model_name}"))
+            fig.add_trace(
+                go.Scatter(x=np.linspace(cur_range[0], cur_range[1],
+                                         num=n_evaluations),
+                           y=test_lost, name=f"test lost {model_name}"))
+
+            fig.update_layout(title=f"{cur_range}")
+        fig.show()
 
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
-    raise NotImplementedError()
+    best_lam_for_lasso = 0.3006
+    best_lam_for_ridge = 0.024
+
+    model_dct["Least Squares Regression"] = LinearRegression()
+    model_dct["RidgeRegression"] = RidgeRegression(best_lam_for_ridge)
+    model_dct["Lasso"] = Lasso(best_lam_for_lasso)
+
+    X = X.to_numpy()
+    y = y.to_numpy()
+    lost = {}
+
+    for model_name, model in model_dct.items():
+        model.fit(X, y)
+        lost[model_name] = mean_square_error(y, model.predict(X))
+
+    print(lost)
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    select_polynomial_degree()
-    select_polynomial_degree(noise=0)
-    select_polynomial_degree(1500, 10)
+    # select_polynomial_degree()
+    # select_polynomial_degree(noise=0)
+    # select_polynomial_degree(1500, 10)
+    select_regularization_parameter()
