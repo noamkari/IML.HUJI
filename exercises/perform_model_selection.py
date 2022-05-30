@@ -31,24 +31,25 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
 
     X = np.linspace(-1.2, 2, n_samples)
 
-    noise = [np.random.normal(0, noise) for _ in range(n_samples)]
+    noise_vec = [np.random.normal(0, noise) for _ in range(n_samples)]
     y = (X + 3) * (X + 2) * (X + 1) * (X - 1) * (X - 2)
     X_train, y_train, X_test, y_test = split_train_test(pd.DataFrame(X),
-                                                        pd.Series(y + noise),
+                                                        pd.Series(
+                                                            y + noise_vec),
                                                         2 / 3)
     X_train = X_train.to_numpy()
     y_train = y_train.to_numpy()
     X_test = X_test.to_numpy()
     y_test = y_test.to_numpy()
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=X, y=y, mode="markers", name="true"))
-    fig.add_trace(
-        go.Scatter(x=X_train.flatten(), y=y_train, mode="markers",
-                   name="train"))
-    fig.add_trace(
-        go.Scatter(x=X_test.flatten(), y=y_test, mode="markers",
-                   name="test"))
+    fig = go.Figure(data=[go.Scatter(x=X, y=y, mode="markers", name="true"),
+                          go.Scatter(x=X_train.flatten(), y=y_train,
+                                     mode="markers",
+                                     name="train"),
+                          go.Scatter(x=X_test.flatten(), y=y_test,
+                                     mode="markers",
+                                     name="test")])
+    fig.update_layout(title=f"value of {n_samples} samples with {noise} noise")
     fig.show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
@@ -64,15 +65,15 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
         train_lost.append(cur_lost)
         test_lost.append(cur_valid)
 
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(x=np.arange(MAX_DEGREE + 1), y=train_lost, name="train lost"))
-    fig.add_trace(
-        go.Bar(x=np.arange(MAX_DEGREE + 1), y=test_lost, name="test lost"))
+    fig = go.Figure(data=[
+        go.Bar(x=np.arange(MAX_DEGREE + 1), y=train_lost, name="train lost"),
+        go.Bar(x=np.arange(MAX_DEGREE + 1), y=test_lost, name="test lost")])
+    fig.update_layout(
+        title=f"loss as func of degree on {n_samples} samples with {noise} noise")
     fig.show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
-    chosen_degree = 5
+    chosen_degree = 4
 
     pol_fitting = PolynomialFitting(chosen_degree)
     pol_fitting.fit(X_train, y_train)
