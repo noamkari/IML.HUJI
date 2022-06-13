@@ -77,8 +77,8 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     chosen_degree = 4
 
     pol_fitting = PolynomialFitting(chosen_degree)
-    pol_fitting.fit(X_train, y_train)
-    pol_fitting.loss(X_test, y_test)
+    print(pol_fitting.fit(X_train, y_train))
+    print(pol_fitting.loss(X_test, y_test))
 
 
 def select_regularization_parameter(n_samples: int = 50,
@@ -158,7 +158,8 @@ def select_regularization_parameter(n_samples: int = 50,
         lost[model_name] = mean_square_error(y, model.predict(X))
 
     print(lost)
-
+    go.Figure(go.Bar(x=[name for name in lost.keys()],
+                     y=[lost for lost in lost.values()])).show()
 
 if __name__ == '__main__':
     np.random.seed(0)
