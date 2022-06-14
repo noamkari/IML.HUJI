@@ -39,12 +39,14 @@ class GradientDescent:
         Callable function should receive as input a GradientDescent instance, and any additional
         arguments specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
                  max_iter: int = 1000,
                  out_type: str = "last",
-                 callback: Callable[[GradientDescent, ...], None] = default_callback):
+                 callback: Callable[
+                     [GradientDescent, ...], None] = default_callback):
         """
         Instantiate a new instance of the GradientDescent class
 
@@ -119,4 +121,41 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+
+        best_out = f.compute_output()
+        best_weights = f.weights_
+
+        sum_out = best_weights
+        number_of_iter = 0
+        delta = self.tol_ + 1
+
+        while number_of_iter < self.max_iter_ and delta > self.tol_:
+            number_of_iter += 1
+
+            eta = self.learning_rate_.lr_step(t=number_of_iter)
+            cur = f.weights_ - eta * f.compute_jacobian()
+            delta = np.linalg.norm(cur - f.weights_)
+
+            f.weights_ = cur
+            sum_out += f.weights_
+
+            if best_out > f.compute_output():
+                best_out = f.compute_output()
+                best_weights = f.weights_
+
+            self.callback_(self, [
+                f.weights_,
+                f.compute_output(X=X, y=y),
+                f.compute_jacobian(X=X, y=y),
+                number_of_iter,
+                eta,
+                delta])
+            print(delta, cur)
+
+        if self.out_type_ == "best":
+            f.weights(best_weights)
+
+        if self.out_type_ == "average":
+            f.weights(sum_out / number_of_iter)
+
+        return f.weights_
