@@ -150,7 +150,6 @@ class GradientDescent:
                 number_of_iter,
                 eta,
                 delta])
-            print(delta, cur)
 
         if self.out_type_ == "best":
             f.weights(best_weights)

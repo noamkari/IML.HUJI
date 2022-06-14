@@ -39,7 +39,8 @@ def plot_descent_path(module: Type[BaseModule],
     Return:
     -------
     fig: go.Figure
-        Plotly figure showing module's value in a grid of [xrange]x[yrange] over which regularization path is shown
+        Plotly figure showing module's value in a grid of [xrange]x[yrange]
+         over which regularization path is shown
 
     Example:
     --------
@@ -63,13 +64,14 @@ def plot_descent_path(module: Type[BaseModule],
 def get_gd_state_recorder_callback() -> Tuple[
     Callable[[], None], List[np.ndarray], List[np.ndarray]]:
     """
-    Callback generator for the GradientDescent class, recording the objective's value and parameters at each iteration
+    Callback generator for the GradientDescent class, recording the objective's
+     value and parameters at each iteration
 
     Return:
     -------
     callback: Callable[[], None]
-        Callback function to be passed to the GradientDescent class, recoding the objective's value and parameters
-        at each iteration of the algorithm
+        Callback function to be passed to the GradientDescent class, recoding
+         the objective's value and parameters at each iteration of the algorithm
 
     values: List[np.ndarray]
         Recorded objective values
@@ -83,8 +85,6 @@ def get_gd_state_recorder_callback() -> Tuple[
     def helper(gd, lst):
         values_lst.append(lst[0])
         weights_lst.append(lst[1])
-        # weights_lst[0].append(lst[1][0])
-        # weights_lst[1].append(lst[1][1])
 
     return helper, values_lst, weights_lst
 
@@ -101,11 +101,11 @@ def compare_fixed_learning_rates(
                                  callback=callback[0])
             gd.fit(model(init.copy()), None, None)
             plot_descent_path(model, np.array(callback[1]),
-                              f"{model_dct[model]} model with {eta} eta").show()
+                              f"{model_dct[model]} model with eta={eta}").show()
             fig = go.Figure(data=[go.Scatter(x=np.arange(gd.max_iter_),
                                              y=callback[2],
                                              mode="markers")])
-            fig.update_layout(title=f"{model} with {eta} eta")
+            fig.update_layout(title=f"{model_dct[model]} with eta={eta} ")
             fig.show()
 
 
@@ -113,15 +113,15 @@ def compare_exponential_decay_rates(
         init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
         eta: float = .1,
         gammas: Tuple[float] = (.9, .95, .99, 1)):
-    # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
+    # Optimize the L1 objective using different decay-rate values of the
+    # exponentially decaying learning rate
 
     scatters = []
 
     for gama in gammas:
         deltas = []
-        callback = lambda model, x: deltas.append(x[-1])
         gd = GradientDescent(ExponentialLR(eta, gama),
-                             callback=callback)
+                             callback=lambda model, x: deltas.append(x[-1]))
         gd.fit(L1(init.copy()), None, None)
 
         scatters.append(go.Scatter(x=np.arange(gd.max_iter_),
@@ -137,7 +137,7 @@ def compare_exponential_decay_rates(
                          callback=callback[0])
     gd.fit(L1(init.copy()), None, None)
     plot_descent_path(L1, np.array(callback[1]),
-                      f"L1 model with {eta} eta and 0.95 gama").show()
+                      f"L1 model with eta={eta} and gama=0.95").show()
 
 
 def load_data(path: str = "../datasets/SAheart.data",
@@ -188,6 +188,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # compare_fixed_learning_rates()
+    compare_fixed_learning_rates()
     compare_exponential_decay_rates()
     fit_logistic_regression()
