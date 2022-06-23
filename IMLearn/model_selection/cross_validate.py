@@ -51,7 +51,6 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
 
         X_test = X[index_sub[i], :]
         y_test = y[index_sub[i]]
-
         estimator.fit(X_train, y_train)
         test_scores.append(scoring(y_test, estimator.predict(X_test)))
         train_scores.append(scoring(y_train, estimator.predict(X_train)))
